@@ -31,6 +31,8 @@
 | [workshop](https://github.com/Amulet-Laboratories/workshop) | Workshop site | ![Netlify](https://api.netlify.com/api/v1/badges/6649794e-129c-41d5-9eb8-8947be97879d/deploy-status) |
 | [chamber](https://github.com/Amulet-Laboratories/chamber) | Chamber site | ![Netlify](https://api.netlify.com/api/v1/badges/0a88919c-cf3b-4516-b568-a0024cabbae3/deploy-status) |
 | [GreylineResearch.com](https://github.com/Amulet-Laboratories/GreylineResearch.com) | Greyline Research | ![Netlify](https://api.netlify.com/api/v1/badges/82ce93a4-ec20-414a-ada3-625ecd2508c1/deploy-status) |
+| [apothecary](https://github.com/Amulet-Laboratories/apothecary) | Design system (Storybook) | Alpha |
+| [vscodemock](https://github.com/Amulet-Laboratories/vscodemock) | VS Code component library | Published |
 
 ### Stack
 
