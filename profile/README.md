@@ -16,11 +16,3 @@
 ![Vite](https://img.shields.io/badge/-Vite-202020?logo=vite&logoColor=c9956d&style=plastic)
 
 </div>
-
-<br />
-
-<div align="center">
-
-◆ **Private** · **Craft** · **Precise** ◆
-
-</div>
