@@ -42,15 +42,41 @@ All UI components should follow:
 Design token reference: [hex.amulet.ink](https://hex.amulet.ink)
 Component library: [rig.amulet.ink](https://rig.amulet.ink)
 
+### Branch Strategy
+
+| Branch type | Pattern | Example |
+|-------------|---------|---------|
+| Feature | `feature/<short-description>` | `feature/add-dark-mode` |
+| Bug fix | `fix/<short-description>` | `fix/navbar-overflow` |
+| Chore / docs | `chore/<short-description>` | `chore/update-deps` |
+| Release | `release/<version>` | `release/1.2.0` |
+
+Branch from `main`. Do not commit directly to `main`.
+
+### Commit Conventions
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer: Closes #issue]
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`
+
 ### Commit & PR Workflow
 
 1. Create a feature branch: `git checkout -b feature/description`
-2. Keep commits focused and descriptive
+2. Keep commits focused and descriptive using Conventional Commits
 3. Submit PR with:
    - Clear title and description
    - Link to related issue (if applicable)
    - Screenshots for visual changes
    - Test coverage for new features
+   - All PR template checklists completed
 
 ### Testing & Quality Gates
 
