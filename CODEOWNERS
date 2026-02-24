@@ -1,0 +1,17 @@
+# Default owners for everything in this org's .github repo
+* @amulet-labs
+
+# Issue and PR templates
+ISSUE_TEMPLATE/ @amulet-labs
+pull_request_template.md @amulet-labs
+
+# Community health files
+CODE_OF_CONDUCT.md @amulet-labs
+CONTRIBUTING.md @amulet-labs
+SECURITY.md @amulet-labs
+
+# Brand assets
+assets/ @amulet-labs
+
+# Org profile
+profile/ @amulet-labs
