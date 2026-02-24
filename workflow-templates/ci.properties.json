@@ -1,0 +1,4 @@
+{
+  "name": "Amulet CI",
+  "description": "Standard CI pipeline for Amulet Laboratories repositories: type-check → lint → test → build → audit"
+}
