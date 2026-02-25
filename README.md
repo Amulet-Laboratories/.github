@@ -3,7 +3,7 @@
   <p align="center">
     Amulet Laboratories — Org-wide configuration & templates
     <br />
-<small>Private repository</small>
+<small><code>i-git</code> · Private repository</small>
   </p>
 </div>
 
