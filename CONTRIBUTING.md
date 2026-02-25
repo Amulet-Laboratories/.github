@@ -39,8 +39,7 @@ All UI components should follow:
 - **Dark mode first** — all designs assume dark theme
 - **Amulet color palette**: `#0f0d0a`, `#c9956d`, `#f5f1ed`, `#2a2620`, `#3d3935`
 
-Design token reference: [hex.amulet.ink](https://hex.amulet.ink)
-Component library: [rig.amulet.ink](https://rig.amulet.ink)
+Design system reference: [hexrig.amulet.ink](https://hexrig.amulet.ink)
 
 ### Commit & PR Workflow
 

@@ -46,8 +46,7 @@ Documentation source of truth: **AmuletLabsVault** at `library.amulet.ink/Amulet
 | 11 | `GreylineResearch.com` | `vertical` | Greyline | Vue 3 / TS / TW3 / Vite 5 / pnpm mono | Netlify | Active | 35% | **High** |
 | 12 | `library.amulet.ink` | `internal` | cross-cutting | Vue 3 / TS / TW3 / Vite 5 / Zod / Auth | Netlify | Active | 75% | **High** |
 | 13 | `Flashforge` | `product/cli` | cross-cutting | TS / Commander / Vitest | CLI (none) | Active | 85% | Low |
-| 14 | `hex.amulet.ink` | `product/library` | cross-cutting | TS / Vite 6 / Vitest / SB 10 | Netlify | Active | 60% | Medium |
-| 15 | `rig.amulet.ink` | `product/library` | cross-cutting | Vue 3 / TS / Vite 6 / Vitest / SB 10 | Netlify | Active | 60% | Medium |
+| 14 | `hexrig.amulet.ink` | `product/library` | cross-cutting | Vue 3 / TS / Vite 6 / Vitest / SB 10 | Netlify | Active | 60% | Medium |
 
 ---
 
@@ -150,7 +149,7 @@ Only `library.amulet.ink` has one. Most ARMS sites have zero env vars — their 
 
 ### Step 11: Add project-specific CONTRIBUTING.md
 
-The org-level `.github/CONTRIBUTING.md` covers general standards. Project-specific ones needed for: `hex.amulet.ink` (library publishing), `rig.amulet.ink` (component dev), `GreylineResearch.com` (monorepo commands), `library.amulet.ink` (auth/serverless).
+The org-level `.github/CONTRIBUTING.md` covers general standards. Project-specific ones needed for: `hexrig.amulet.ink` (design system monorepo), `GreylineResearch.com` (monorepo commands), `library.amulet.ink` (auth/serverless).
 
 ### Step 12: Create or backfill CHANGELOG.md
 
@@ -170,7 +169,7 @@ All repos. Hex and Rig changelogs exist but are stale — show `[0.0.0]` while R
 Priority order:
 
 1. `labs.amulet.ink` — revenue engine, highest business risk
-2. `hex.amulet.ink` + `rig.amulet.ink` — shared libraries, breakage has blast radius
+2. `hexrig.amulet.ink` — shared design system, breakage has blast radius
 3. `amulet.ink` — public-facing hub
 4. `GreylineResearch.com` — active vertical with monorepo
 5. `AndrewPassanisi.com` — completed but live
@@ -427,7 +426,7 @@ Ranked by failure impact:
 2. `library.amulet.ink` — ops command center. Auth breaks = ops visibility lost.
 3. `GreylineResearch.com` — active vertical with client-facing presence.
 4. `amulet.ink` — brand hub, gateway to all imprints.
-5. `hex.amulet.ink` / `rig.amulet.ink` — shared infra. Breakage blocks downstream.
+5. `hexrig.amulet.ink` — shared design system. Breakage blocks downstream.
 
 These get priority for documentation, testing, monitoring, backup, and CI/CD.
 

@@ -90,8 +90,7 @@ Items discovered during a full codebase review after the audit. Organized by cat
 
 ### TypeScript Consistency
 
-- [ ] ⚙️ **Fix rig.amulet.ink tsconfig contradictions** — sets `outDir`, `declaration`, `declarationMap` alongside `noEmit: true` (dead options since vite-plugin-dts handles emit)
-- [ ] ⚙️ **Fix hex.amulet.ink tsconfig contradictions** — same emit-setting confusion as rig
+- [ ] ⚙️ **Fix hexrig.amulet.ink tsconfig contradictions** — sets `outDir`, `declaration`, `declarationMap` alongside `noEmit: true` (dead options since vite-plugin-dts handles emit)
 - [ ] ⚙️ **Update AndrewPassanisi.com tsconfig** — uses `moduleResolution: "node"` (should be `"bundler"`), missing `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`
 - [ ] ⚙️ **Update Flashforge tsconfig** — `moduleResolution` should be `"node16"` or `"nodenext"` (not `"node"`) for a Node CLI project; remove redundant strict sub-options already implied by `strict: true`
 - [ ] ⚙️ **Fix GreylineResearch.com/packages/shared tsconfig** — missing `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`, `resolveJsonModule`
@@ -129,7 +128,7 @@ Items discovered during a full codebase review after the audit. Organized by cat
 - [ ] ⚙️ **Add `Strict-Transport-Security` (HSTS) to 7 Netlify sites** — only library.amulet.ink has it; add `Strict-Transport-Security: max-age=31536000; includeSubDomains` to all `_headers` files
 - [ ] ⚙️ **Add HSTS to AndrewPassanisi.com `vercel.json`** — has other security headers but missing HSTS
 - [ ] ⚙️ **Add `Content-Security-Policy` to ARMS sites and Greyline** — only labs and library have CSP; needs per-site tailoring (e.g., Google Fonts requires `font-src` whitelisting)
-- [ ] ⚙️ **Add `_headers` file to hex.amulet.ink and interactive.amulet.ink** — both completely missing security headers
+- [ ] ⚙️ **Add `_headers` file to hexrig.amulet.ink and interactive.amulet.ink** — both completely missing security headers
 - [ ] ⚙️ **Fix library.amulet.ink `netlify.toml` build command** — missing `corepack enable` prefix that all other repos have (fragile if Netlify build image changes)
 
 ### ESLint
@@ -152,7 +151,7 @@ Items discovered during a full codebase review after the audit. Organized by cat
 - [ ] 🎨 **Create OG images for all sites** — amulet.ink and all ARMS placeholders share no `og:image`; social media shares show no preview
 - [ ] ⚙️ **Fix `screenshots` field in all `manifest.json` files** — currently uses favicon SVG as "screenshot" (semantically wrong); either add real screenshots or remove the field
 - [ ] 🔧 **Decide Greyline notebook deployment intent** — no Netlify config; if internal-only, add `noindex, nofollow`; if public, needs full SEO treatment
-- [ ] 🔧 **Add `noindex, nofollow` to rig.amulet.ink** — Storybook dev environment shouldn't be indexed (if deployed)
+- [ ] 🔧 **Add `noindex, nofollow` to hexrig.amulet.ink** — Storybook dev environment shouldn't be indexed (if deployed)
 
 ### Git Hooks
 

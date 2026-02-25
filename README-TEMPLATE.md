@@ -153,8 +153,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for project-specific guidelines and the
 
 ## Related Resources
 
-- [Hex Design System](https://hex.amulet.ink) — Design tokens and themes
-- [Rig Component Library](https://rig.amulet.ink) — Vue 3 UI components
+- [HexRig Design System](https://hexrig.amulet.ink) — Design tokens, themes & Vue 3 components
 - [Amulet Laboratories](https://github.com/Amulet-Laboratories) — GitHub organization
 
 ## Changelog
