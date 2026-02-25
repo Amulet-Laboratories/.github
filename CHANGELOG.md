@@ -4,11 +4,24 @@ All notable changes to the Amulet Laboratories organization infrastructure will 
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-02-25
+
+### Changed
+
+- `profile/README.md` — added Getting Started section with setup breadcrumbs and key repo links
+- `README.md` — removed AUDIT-PLAN.md from contents table
+
+### Removed
+
+- `AUDIT-PLAN.md` — session artifact, no longer operational
+- `TODO.md` — session artifact, tasks tracked elsewhere
+- `.env.example` — empty placeholder, no env vars required
+
 ## [1.0.0] — 2026-02-24
 
 ### Added
 
-Full infrastructure audit and stabilization across all 15 repositories per [AUDIT-PLAN.md](AUDIT-PLAN.md).
+Full infrastructure audit and stabilization across all 15 repositories.
 
 #### Wave 1 — Security & Foundation
 
