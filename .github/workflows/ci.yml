@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  workflow_call:
+    inputs:
+      type:
+        description: 'Repo type: vue-app | vue-library | config | monorepo'
+        required: false
+        type: string
+        default: 'vue-app'
+      monorepo-filter:
+        description: 'pnpm --filter value for monorepo builds'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      # Type check (skipped for config repos)
+      - name: Type check
+        if: inputs.type != 'config'
+        run: ${{ inputs.type == 'monorepo' && format('pnpm -r type-check') || 'pnpm type-check' }}
+
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm test --run --if-present
+
+      # Build (skipped for config repos)
+      - name: Build
+        if: inputs.type != 'config'
+        run: ${{ inputs.type == 'monorepo' && format('pnpm -r build') || 'pnpm build' }}
+
+      - run: pnpm audit --audit-level=moderate
+
+  # Validate deploy config for deployable repos
+  deploy-check:
+    if: inputs.type != 'config'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Verify netlify.toml exists
+        run: |
+          if [ ! -f netlify.toml ]; then
+            echo "::error::Missing netlify.toml — all deployable repos must have a Netlify config"
+            exit 1
+          fi
+      - name: Verify netlify.toml has required fields
+        run: |
+          if ! grep -q '\[build\]' netlify.toml; then
+            echo "::error::netlify.toml missing [build] section"
+            exit 1
+          fi
+          if ! grep -q 'publish' netlify.toml; then
+            echo "::error::netlify.toml missing publish directory"
+            exit 1
+          fi
+          if ! grep -q 'NODE_VERSION' netlify.toml; then
+            echo "::error::netlify.toml missing NODE_VERSION in build.environment"
+            exit 1
+          fi
+          echo "netlify.toml validated ✓"
