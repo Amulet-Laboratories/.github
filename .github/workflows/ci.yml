@@ -35,7 +35,7 @@ jobs:
 
       - run: pnpm lint
       - run: pnpm format:check
-      - run: pnpm test --run --if-present
+      - run: pnpm run --if-present test -- --run
 
       # Build (skipped for config repos)
       - name: Build
