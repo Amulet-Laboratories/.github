@@ -36,6 +36,7 @@ Org-level GitHub configuration for Amulet Laboratories. Contains shared communit
 | `pull_request_template.md` | PR template for all repos |
 | `workflow-templates/` | Reusable CI workflow templates |
 | `README-TEMPLATE.md` | Standard README template for new repos |
+| `.editorconfig` | Editor formatting rules (indent, line endings) |
 | `assets/` | Shared assets (brand mark SVG, etc.) |
 
 ## Environment Variables

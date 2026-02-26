@@ -17,7 +17,7 @@ Active — v1.0.0. Stable configuration repo.
 ```
 .github/
 ├── workflows/
-│   └── ci.yml              # Reusable CI workflow (called by all 15 repos)
+│   └── ci.yml              # Reusable CI workflow (called by all 18 repos)
 ├── ISSUE_TEMPLATE/
 │   ├── bug_report.md
 │   ├── feature_request.md
@@ -47,7 +47,7 @@ Uses `--audit-level=critical` for security scans.
 
 ## Key Rules
 
-- Changes here affect all 15 repos — test thoroughly
+- Changes here affect all 18 repos — test thoroughly
 - The CI workflow must handle `PKG_READ_TOKEN` → `NODE_AUTH_TOKEN` mapping
   for GitHub Packages auth (org secrets don't pass through `workflow_call` on Free)
 - PR template and issue templates define the contribution workflow
