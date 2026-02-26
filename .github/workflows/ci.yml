@@ -13,6 +13,10 @@ on:
         required: false
         type: string
         default: ''
+    secrets:
+      PKG_READ_TOKEN:
+        description: 'PAT with read:packages scope for GitHub Packages'
+        required: false
 
 jobs:
   check:
