@@ -13,6 +13,10 @@ on:
         required: false
         type: string
         default: ''
+    secrets:
+      PKG_READ_TOKEN:
+        description: 'PAT with read:packages scope for GitHub Packages'
+        required: false
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -28,7 +32,7 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.PKG_READ_TOKEN }}
 
       # Type check (skipped for config repos)
       - name: Type check
