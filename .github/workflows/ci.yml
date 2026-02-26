@@ -13,11 +13,6 @@ on:
         required: false
         type: string
         default: ''
-    secrets:
-      PKG_READ_TOKEN:
-        description: 'PAT with read:packages scope for GitHub Packages'
-        required: false
-
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -31,11 +26,9 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-      - name: Configure GitHub Packages auth
-        run: |
-          echo "@amulet-laboratories:registry=https://npm.pkg.github.com" >> .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.PKG_READ_TOKEN }}" >> .npmrc
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Type check (skipped for config repos)
       - name: Type check
