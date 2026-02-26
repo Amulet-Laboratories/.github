@@ -4,6 +4,12 @@ All notable changes to the Amulet Laboratories organization infrastructure will 
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-02-26
+
+### Added
+
+- `dependabot.yml` — Dependabot configuration for automated GitHub Actions dependency updates. Weekly schedule (Mondays), 5-PR limit, `ci:` commit prefix.
+
 ## [1.1.0] — 2026-02-25
 
 ### Changed
