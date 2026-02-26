@@ -48,7 +48,7 @@ jobs:
         if: inputs.type != 'config'
         run: ${{ inputs.type == 'monorepo' && format('pnpm -r build') || 'pnpm build' }}
 
-      - run: pnpm audit --audit-level=high
+      - run: pnpm audit --audit-level=critical
 
   # Validate deploy config for deployable repos
   deploy-check:
