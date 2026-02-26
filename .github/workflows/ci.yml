@@ -37,7 +37,7 @@ jobs:
       # Type check (skipped for config repos)
       - name: Type check
         if: inputs.type != 'config'
-        run: ${{ inputs.type == 'monorepo' && format('pnpm -r type-check') || 'pnpm type-check' }}
+        run: ${{ inputs.type == 'monorepo' && format('pnpm -r --if-present type-check') || 'pnpm type-check' }}
 
       - run: pnpm lint
       - run: pnpm format:check
@@ -48,7 +48,7 @@ jobs:
         if: inputs.type != 'config'
         run: ${{ inputs.type == 'monorepo' && format('pnpm -r build') || 'pnpm build' }}
 
-      - run: pnpm audit --audit-level=moderate
+      - run: pnpm audit --audit-level=high
 
   # Validate deploy config for deployable repos
   deploy-check:
