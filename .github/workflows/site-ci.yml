@@ -38,5 +38,10 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Prettier drift shipped twice while the gate ran `lint` only. Prettier is
+      # scoped to source by each site's .prettierignore (content/data excluded).
+      - name: Format check
+        run: pnpm format:check
+
       - name: Build
         run: pnpm build
