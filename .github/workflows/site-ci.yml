@@ -1,0 +1,42 @@
+# Reusable CI for every authority site in the network.
+#
+# The six sites are byte-identical clones, so their CI lived as six copies of the
+# same deploy.yml — every change meant six edits. This defines the pipeline once;
+# each site's workflow is a thin caller (see a site's .github/workflows/deploy.yml).
+#
+# Note: this does NOT deploy — Netlify builds each site from its own repo. This is
+# the lint + build gate. The content guard (self-closing MDC component tags) runs
+# inside `pnpm build` via the rig-nuxt module hook, so it needs no separate step.
+name: Site CI
+
+on:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
