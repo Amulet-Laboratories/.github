@@ -33,20 +33,28 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const TIMEOUT_MS = 15_000
 const RETRIES = 2 // one real attempt + this many retries, for transient network/CDN blips
 
-/** fetch with a timeout and a couple of retries on network error / 5xx. */
+/**
+ * fetch with a timeout and a couple of retries on network error / 5xx. Pass
+ * `readBody: true` to also read the response text INSIDE the retry window and get
+ * back `{ res, body }` — a body read (`.text()`) can throw ECONNRESET mid-stream
+ * on a CDN blip, so it must be retried too, not left to crash the caller.
+ */
 async function robustFetch(url, opts = {}) {
+  const { readBody = false, ...fetchOpts } = opts
   let lastErr
   for (let attempt = 0; attempt <= RETRIES; attempt++) {
     const ac = new AbortController()
     const timer = setTimeout(() => ac.abort(), TIMEOUT_MS)
     try {
-      const res = await fetch(url, { ...opts, signal: ac.signal, redirect: opts.redirect ?? 'follow' })
-      clearTimeout(timer)
+      const res = await fetch(url, { ...fetchOpts, signal: ac.signal, redirect: fetchOpts.redirect ?? 'follow' })
       if (res.status >= 500 && attempt < RETRIES) {
+        clearTimeout(timer)
         await sleep(1000 * (attempt + 1))
         continue
       }
-      return res
+      const body = readBody ? await res.text() : undefined
+      clearTimeout(timer)
+      return readBody ? { res, body } : res
     } catch (err) {
       clearTimeout(timer)
       lastErr = err
@@ -88,16 +96,19 @@ async function checkSite(site, results) {
   const base = `https://${site.host}`
   const S = site.name
 
-  // Fetch the homepage once and reuse it for status / canonical / headers.
+  // Fetch the homepage once and reuse it for status / canonical / headers. The
+  // body read is retried inside robustFetch and captured here, so a transient
+  // reset fails this one check instead of crashing the whole run.
   let home
+  let html
   await check(results, S, 'homepage 200', async () => {
-    home = await robustFetch(`${base}/`)
-    return home.ok ? null : `GET / -> ${home.status}`
+    const { res, body } = await robustFetch(`${base}/`, { readBody: true })
+    home = res
+    html = body
+    return res.ok ? null : `GET / -> ${res.status}`
   })
 
-  if (home && home.ok) {
-    const html = await home.text()
-
+  if (home && home.ok && html != null) {
     await check(results, S, 'canonical host', () => {
       const m = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/i)
       if (!m) return 'no <link rel="canonical"> found'
@@ -126,9 +137,9 @@ async function checkSite(site, results) {
   // Revenue guard: the canary roundup must render its full set of affiliate cards.
   if (site.canaryPath) {
     await check(results, S, `cards render (${site.expectedCards})`, async () => {
-      const r = await robustFetch(`${base}${site.canaryPath}`)
-      if (!r.ok) return `GET ${site.canaryPath} -> ${r.status}`
-      const n = countRenderedCards(await r.text())
+      const { res, body } = await robustFetch(`${base}${site.canaryPath}`, { readBody: true })
+      if (!res.ok) return `GET ${site.canaryPath} -> ${res.status}`
+      const n = countRenderedCards(body)
       if (n < site.expectedCards) return `only ${n}/${site.expectedCards} product cards rendered on ${site.canaryPath}`
       return null
     })
@@ -150,8 +161,16 @@ async function main() {
   const { sites } = JSON.parse(await readFile(join(HERE, 'sites.json'), 'utf8'))
   const results = []
 
-  // Sites are independent — check them concurrently.
-  await Promise.all(sites.map((s) => checkSite(s, results)))
+  // Sites are independent — check them concurrently. A checkSite should never
+  // throw (every fetch is inside check()), but guard anyway so one unexpected
+  // error becomes a failed check for that site, never a crash of the whole run.
+  await Promise.all(
+    sites.map((s) =>
+      checkSite(s, results).catch((err) =>
+        results.push({ site: s.name, name: 'run', ok: false, detail: `crashed: ${err.message}` }),
+      ),
+    ),
+  )
 
   const failures = results.filter((r) => !r.ok)
 
