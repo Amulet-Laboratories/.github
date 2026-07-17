@@ -1,0 +1,47 @@
+# Post-deploy smoke test for the whole affiliate network.
+#
+# CI (site-ci.yml) proves each site BUILDS. This proves each site WORKS in
+# production — it hits the live domains from the outside and asserts the pages a
+# visitor sees are healthy (200s, correct canonical, security headers, and the
+# revenue-critical affiliate cards actually rendering). See smoke/smoke.mjs.
+#
+# It runs centrally from this org repo — one job covers all 7 sites, so there is
+# nothing to copy into each site repo.
+#
+# Triggers:
+#   - schedule:            every 30 min. Doubles as an uptime monitor and catches
+#                          "deploy silently served a stale build" between deploys.
+#   - workflow_dispatch:   run it by hand from the Actions tab.
+#   - repository_dispatch: fire type `deploy-succeeded` to make it a TRUE
+#                          post-deploy gate. Wire a site's Netlify "Deploy
+#                          succeeded" outgoing webhook to
+#                          POST https://api.github.com/repos/Amulet-Laboratories/.github/dispatches
+#                          with {"event_type":"deploy-succeeded"} (optional; the
+#                          schedule already provides coverage without it).
+name: Smoke
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [deploy-succeeded]
+
+concurrency:
+  group: smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run smoke test
+        run: node smoke/smoke.mjs
