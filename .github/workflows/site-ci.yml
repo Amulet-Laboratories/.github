@@ -43,5 +43,25 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
-      - name: Build
-        run: pnpm build
+      # Spin-tell lint. The 5.1 editorial pass cleaned ~160 thesaurus
+      # substitutions and unsubstantiated testing claims out of the articles by
+      # hand; this gate stops the next generated batch reintroducing them.
+      #
+      # The wordlist is inline here rather than fetched from a shared file: the
+      # default GITHUB_TOKEN in a site's run can't read the private org .github
+      # repo (the same PAT gap that blocks the products-db parity check). Since
+      # this reusable workflow IS the one definition all six sites call, editing
+      # the list here still propagates fleet-wide in a single edit.
+      #
+      # Whole-word, case-insensitive, over content/articles only.
+      - name: Spin-tell lint
+        run: |
+          tells='dwelling|residence|abode|numerous|seamless|seamlessly|boasts|utilize|utilizes|utilizing|myriad|plethora|delve into|in my testing|our testing|hands-on testing|hands-on evaluation|grab dialed in|raised-end|lofty effort|the sole best value proposition'
+          if grep -rniE "\\b(${tells})\\b" content/articles --include='*.md'; then
+            echo ""
+            echo "✗ spin-tells found above — thesaurus-substituted or padded prose."
+            echo "  Rewrite them, or if genuinely correct, drop the tell from the"
+            echo "  list in .github/workflows/site-ci.yml with a note."
+            exit 1
+          fi
+          echo "✓ no spin-tells in content/articles"
