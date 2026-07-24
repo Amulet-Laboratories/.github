@@ -1,0 +1,29 @@
+# Daily IndexNow submission for the whole network.
+#
+# Pushes each site's live sitemap URLs to IndexNow (Bing, DuckDuckGo, Yandex —
+# not Google). Fetches the LIVE sitemap so ISR article URLs are included, which
+# a build-time sitemap would miss. IndexNow dedups unchanged URLs, so a daily
+# full submit is safe; the value is that new pages (QuizSort growth) get pushed
+# within a day without a manual step.
+#
+# The IndexNow key is public by design (hosted at /<key>.txt on each site), so
+# no secret is needed. Manual runs allowed via workflow_dispatch.
+name: IndexNow
+
+on:
+  schedule:
+    - cron: '17 6 * * *' # daily, 06:17 UTC — offset from the smoke schedule
+  workflow_dispatch:
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Submit sitemaps to IndexNow
+        run: node indexnow/submit.mjs
