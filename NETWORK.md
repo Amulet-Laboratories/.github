@@ -71,7 +71,7 @@ monetization layer.** Settled 2026-07 after a research pass:
 |---|---|
 | `QuizSort.com` | The hub. Nuxt 3 SSR, gamification, 5 games, generation scripts. |
 | `franchise-db` | The corpus. tsx + SQLite. `pnpm cli …` — see its README. |
-| `Beanwoven.com` … `TheShelfNook.com` | Six frozen authority sites, `site-boilerplate` clones. |
+| `Beanwoven.com` … `TheShelfNook.com` | Six frozen authority sites, near-identical siblings. See [SITE-ARCHITECTURE.md](SITE-ARCHITECTURE.md). |
 | `products-db` | 897 affiliate products, validated, copied into each site. |
 | `Rig` / `hex` | Headless Vue component library + theming; `rig-nuxt` is the shared Nuxt module. |
 | `.github` (this repo) | Org-wide infra: reusable CI, smoke tests, IndexNow, this doc. |
