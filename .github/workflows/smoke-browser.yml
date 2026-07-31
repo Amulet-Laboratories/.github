@@ -1,0 +1,50 @@
+# Browser-level smoke test for the whole affiliate network.
+#
+# smoke.yml (every 30 min) proves the sites RESPOND — HTTP status, canonical,
+# headers, card counts. It reads HTML and never runs it.
+#
+# This one proves they WORK IN A BROWSER. On 2026-07-31 /best-for rendered
+# "500 Something went wrong" in every real browser on all six sites while
+# server-rendering a perfect 200, so curl, crawlers, the sitemap, uptime checks
+# and smoke.yml all reported healthy. A browser was the only thing that could
+# see it. Same day, a duplicate <main> broke "Skip to content" on all six.
+#
+# Both classes come from the shared design system, which means they arrive on
+# six sites at once — so the guard belongs here, centrally, not per repo.
+#
+# Cadence is DAILY, not every 30 minutes: Playwright is far heavier than fetch,
+# and these are regression classes that arrive with a deploy, not drift that
+# appears on its own. smoke.yml remains the uptime signal.
+name: Smoke (browser)
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [deploy-succeeded]
+
+concurrency:
+  group: smoke-browser
+  cancel-in-progress: true
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # Chromium only — the failures this catches are not browser-specific, and
+      # installing all three engines triples the runtime for no added signal.
+      - name: Install Playwright (chromium)
+        run: npx --yes playwright@1 install --with-deps chromium
+
+      - name: Run browser smoke test
+        run: npx --yes --package=playwright@1 node smoke/browser-smoke.mjs
