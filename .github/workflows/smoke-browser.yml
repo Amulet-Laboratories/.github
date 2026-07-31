@@ -43,8 +43,15 @@ jobs:
 
       # Chromium only — the failures this catches are not browser-specific, and
       # installing all three engines triples the runtime for no added signal.
+      #
+      # `npm install` rather than `npx --package=…`: the script does a bare ESM
+      # `import { chromium } from 'playwright'`, and npx does not put the package
+      # anywhere Node's resolver will look from the script's own directory. The
+      # first run of this workflow failed in 40s on exactly that.
       - name: Install Playwright (chromium)
-        run: npx --yes playwright@1 install --with-deps chromium
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1
+          npx playwright install --with-deps chromium
 
       - name: Run browser smoke test
-        run: npx --yes --package=playwright@1 node smoke/browser-smoke.mjs
+        run: node smoke/browser-smoke.mjs
