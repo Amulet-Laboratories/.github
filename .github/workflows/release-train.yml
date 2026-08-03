@@ -76,6 +76,18 @@ jobs:
       # is about to act on them. Non-blocking: a drifted document should not stop
       # a release, but it must not go unmentioned either — the drift is reported
       # in the PR body, where it is read rather than buried in a log.
+      # The verifier lives in the .github repo, not in the repo being released,
+      # so it has to be fetched. $GITHUB_ACTION_PATH is for composite actions and
+      # is empty here — using it silently resolved to /scripts/... and made a
+      # broken checker look identical to a failed claim.
+      - name: Fetch the process verifier
+        if: steps.diff.outputs.count != '0'
+        uses: actions/checkout@v7
+        with:
+          repository: Amulet-Laboratories/.github
+          path: .release-train-tools
+          ref: main
+
       - name: Verify process claims
         id: claims
         if: steps.diff.outputs.count != '0'
@@ -85,8 +97,15 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           set +e
-          OUT=$(node "$GITHUB_ACTION_PATH/scripts/verify-process.mjs" 2>&1 \
-                || node scripts/verify-process.mjs 2>&1)
+          SCRIPT=.release-train-tools/scripts/verify-process.mjs
+          if [ ! -f "$SCRIPT" ]; then
+            # Distinguish "cannot check" from "claim is false". Crying drift when
+            # the checker is missing is how a check gets ignored.
+            echo "status=broken" >> "$GITHUB_OUTPUT"
+            echo "verifier not found at $SCRIPT"
+            exit 0
+          fi
+          OUT=$(node "$SCRIPT" 2>&1)
           CODE=$?
           echo "$OUT"
           {
@@ -94,7 +113,7 @@ jobs:
             echo "$OUT"
             echo CLAIMS
           } >> "$GITHUB_OUTPUT"
-          echo "drifted=$CODE" >> "$GITHUB_OUTPUT"
+          echo "status=$([ $CODE -eq 0 ] && echo held || echo drifted)" >> "$GITHUB_OUTPUT"
           exit 0
 
       - name: Open or update the release PR
@@ -106,16 +125,19 @@ jobs:
           LABEL: ${{ inputs.label }}
           COUNT: ${{ steps.diff.outputs.count }}
           LOG: ${{ steps.diff.outputs.log }}
-          DRIFTED: ${{ steps.claims.outputs.drifted }}
+          CLAIM_STATUS: ${{ steps.claims.outputs.status }}
           CLAIMS: ${{ steps.claims.outputs.report }}
         run: |
           set -euo pipefail
           TITLE="Release $(date -u +%Y-%m-%d) — $COUNT commit(s)"
 
           DRIFT=""
-          if [ "${DRIFTED:-0}" != "0" ]; then
-            DRIFT=$(printf '\n## :warning: A process document is now wrong\n\n```\n%s\n```\n\nFix the document or the system before merging.\n' "$CLAIMS")
-          fi
+          case "${CLAIM_STATUS:-}" in
+            drifted)
+              DRIFT=$(printf '\n## :warning: A process document is now wrong\n\n```\n%s\n```\n\nFix the document or the system before merging.\n' "$CLAIMS") ;;
+            broken)
+              DRIFT=$(printf '\n## :grey_question: Process claims were not checked\n\nThe verifier could not be run, so nothing here is confirmed. Not the same as passing.\n') ;;
+          esac
 
           BODY=$(cat <<EOF
           Scheduled promotion of \`$HEAD\` → \`$BASE\`.
