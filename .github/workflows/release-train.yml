@@ -72,6 +72,31 @@ jobs:
             echo RELEASE_LOG
           } >> "$GITHUB_OUTPUT"
 
+      # Verify the claims the process documents make, at the one moment someone
+      # is about to act on them. Non-blocking: a drifted document should not stop
+      # a release, but it must not go unmentioned either — the drift is reported
+      # in the PR body, where it is read rather than buried in a log.
+      - name: Verify process claims
+        id: claims
+        if: steps.diff.outputs.count != '0'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          set +e
+          OUT=$(node "$GITHUB_ACTION_PATH/scripts/verify-process.mjs" 2>&1 \
+                || node scripts/verify-process.mjs 2>&1)
+          CODE=$?
+          echo "$OUT"
+          {
+            echo 'report<<CLAIMS'
+            echo "$OUT"
+            echo CLAIMS
+          } >> "$GITHUB_OUTPUT"
+          echo "drifted=$CODE" >> "$GITHUB_OUTPUT"
+          exit 0
+
       - name: Open or update the release PR
         if: steps.diff.outputs.count != '0'
         env:
@@ -81,9 +106,16 @@ jobs:
           LABEL: ${{ inputs.label }}
           COUNT: ${{ steps.diff.outputs.count }}
           LOG: ${{ steps.diff.outputs.log }}
+          DRIFTED: ${{ steps.claims.outputs.drifted }}
+          CLAIMS: ${{ steps.claims.outputs.report }}
         run: |
           set -euo pipefail
           TITLE="Release $(date -u +%Y-%m-%d) — $COUNT commit(s)"
+
+          DRIFT=""
+          if [ "${DRIFTED:-0}" != "0" ]; then
+            DRIFT=$(printf '\n## :warning: A process document is now wrong\n\n```\n%s\n```\n\nFix the document or the system before merging.\n' "$CLAIMS")
+          fi
 
           BODY=$(cat <<EOF
           Scheduled promotion of \`$HEAD\` → \`$BASE\`.
@@ -93,6 +125,7 @@ jobs:
           ## What ships
 
           $LOG
+          $DRIFT
 
           ---
 

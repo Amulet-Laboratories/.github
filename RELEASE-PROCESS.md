@@ -138,6 +138,37 @@ gh auth refresh -h github.com -s workflow    # interactive
 
 or merge locally and `git push` over SSH, which is not subject to the scope check.
 
+## Why the claims in this file are checked
+
+Three steps in an earlier version of this document described something other than
+what the system does: a `netlify.toml` block said to control whether branches build
+(it only configures builds that were already off), a staging URL that has never
+existed, and an operator task to cut branch-deploy waste that was never being spent.
+
+None of that was careless. **Writing a step down produces the same confidence as
+verifying it, and prose has nothing that fails.** A documented claim is an
+unexecuted assertion.
+
+So the load-bearing ones execute. `scripts/verify-process.mjs` asserts them, and the
+release train runs it at the one moment someone is about to act on this document —
+reporting drift **in the PR body**, where it gets read.
+
+```bash
+GH_TOKEN=$(gh auth token) NETLIFY_AUTH_TOKEN=… node scripts/verify-process.mjs
+```
+
+It reports three outcomes, and the third is the point: `PASS`, `FAIL`, and
+**`UNKNOWN`** for a claim it could not check. UNKNOWN is never counted as a pass —
+an unverifiable claim is a sentence nothing is watching. It exits non-zero only on
+`FAIL`; blocking a release on a missing token would just teach everyone to skip it.
+
+**Two rules that go with it**, because not everything is checkable:
+
+- **If a claim is checkable, check it. If it is not, do not state it as fact.**
+- **Never write an operator step from inference** — only from having run something.
+  All three failures above came from reading config and reasoning about what it
+  must do.
+
 ## What did not change
 
 - `main` is still what production builds from. Nothing deploys off `develop`.
