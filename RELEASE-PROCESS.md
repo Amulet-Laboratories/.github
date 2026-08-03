@@ -67,7 +67,24 @@ git checkout main && git pull
 git checkout -b develop && git push -u origin develop
 ```
 
-Set `develop` as the repo's default branch on GitHub so PRs target it by default.
+Then set `develop` as the repo's **default branch** on GitHub:
+
+```bash
+gh api -X PATCH repos/Amulet-Laboratories/<repo> -f default_branch=develop
+```
+
+**This is load-bearing, not a convenience.** GitHub only fires `schedule` events
+for workflows that exist on the default branch — *"This event will only trigger a
+workflow run if the workflow file exists on the default branch."* Leave the default
+as `main` with the caller on `develop` and the cron never runs, with no error
+anywhere: `gh workflow list` simply omits it. Verify after switching:
+
+```bash
+gh workflow list | grep 'Release train'     # must appear, and say active
+```
+
+Netlify's production branch is a separate setting and stays `main`, so this does
+not change what deploys. It also makes new PRs target `develop` by default.
 
 ## Operator steps — these cannot be done from a repo
 
@@ -85,7 +102,29 @@ which means **the live Fathom ID would fire on branch builds**. The block must s
 
 Do this for all seven Nuxt sites and AmuletLabs.org. Deploy previews stay on.
 
-**2. `gh pr merge` will refuse the PR that adds these workflows.**
+**2. Let Actions open pull requests. Without this the train cannot run at all.**
+
+The org currently sets `default_workflow_permissions: read`, so a workflow's
+`GITHUB_TOKEN` cannot write anything — and opening the release PR fails with:
+
+> GitHub Actions is not permitted to create or approve pull requests
+
+Both toggles are needed, and the org policy overrides the repo one, so the org is
+where it has to change (a repo-level `PUT` returns *"Write permissions for
+workflows are disabled by the organization"*):
+
+> Organization → Settings → Actions → General → Workflow permissions
+> → **Read and write permissions**
+> → tick **Allow GitHub Actions to create and approve pull requests**
+
+Needs org-admin; `gh` also needs `admin:org` before it can read or set this.
+Verify by dispatching the train — it should open a PR rather than fail:
+
+```bash
+gh workflow run release-train.yml --ref develop
+```
+
+**3. `gh pr merge` will refuse the PR that adds these workflows.**
 
 The CLI's OAuth token lacks the `workflow` scope, so any PR touching
 `.github/workflows/` fails with *"refusing to allow an OAuth App to create or
