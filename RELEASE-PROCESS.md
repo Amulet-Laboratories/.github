@@ -22,19 +22,22 @@ this document is the thing to change — not the habit.
 
 ```
 feature branch ──PR──▶ develop ──release train──▶ main ──▶ production
-                          │                                    ▲
-                          └──▶ staging URL                      │
-                              (analytics + Sentry blanked)      │
-                                                  1st & 15th, on a click
+                 │                      │                    ▲
+          deploy preview          release PR            1st & 15th,
+          (verify here)          + its preview            on a click
 ```
+
+**Three builds per change, and no more.** A PR into `develop` builds a preview; merging
+it builds nothing; the release PR builds one preview; merging that deploys production.
 
 1. Branch from `develop`, open a PR into `develop`.
 2. CI runs, and Netlify builds a **deploy preview** for the PR. Verify there —
    some things only reproduce on Netlify's edge (trailing-slash handling, header
    rules, redirects); a local `dist/` build cannot show you those.
-3. Merge to `develop`. Netlify builds the **staging** context, which blanks
-   `NUXT_PUBLIC_FATHOM_SITE_ID` and `NUXT_PUBLIC_SENTRY_DSN` so staging traffic
-   never pollutes production analytics.
+3. Merge to `develop`. **Nothing builds** — `develop` is not in any site's
+   `allowed_branches`, so work simply accumulates. Verification already happened on
+   the PR preview in step 2; a persistent staging site would only add a build per
+   merge for a view the preview already gave you.
 4. **The 1st and the 15th, 09:00 UTC**, the release train opens a `develop → main`
    PR listing every commit since the last release. Landing on a weekend does not
    matter — it opens a PR and never merges, so it waits for you.
@@ -88,19 +91,18 @@ not change what deploys. It also makes new PRs target `develop` by default.
 
 ## Operator steps — these cannot be done from a repo
 
-**1. Restrict branch deploys, per site, in Netlify.**
+**1. Nothing to do in Netlify — verified 2026-08-02.**
 
-This is the actual build-cost lever and it is **not** a `netlify.toml` change.
-Deleting `[context.branch-deploy]` does *not* stop branches building — that block
-only *configures* those builds. Whether a branch deploys at all is a site setting.
+Every site already has `build_settings.allowed_branches: ["main"]`, so branch deploys
+have never run: the deploy history shows only `production` and `deploy-preview`
+contexts. There was no per-branch build waste to cut, and **`develop` must stay out of
+`allowed_branches`** — adding it would create a build on every merge to `develop`,
+which is the opposite of why this process exists.
 
-Worse, deleting it would make branch builds inherit production configuration,
-which means **the live Fathom ID would fire on branch builds**. The block must stay.
-
-> Site configuration → Build & deploy → Branches and deploy contexts
-> → Branch deploys: **Let me add individual branches** → `develop` only
-
-Do this for all seven Nuxt sites and AmuletLabs.org. Deploy previews stay on.
+The `[context.branch-deploy]` and `[context.develop]` blocks in each `netlify.toml`
+are therefore inert. **Leave them in.** They are the safety net if branch deploys are
+ever switched on: without them a branch build would inherit production configuration
+and fire the **live Fathom ID** into the estate's only measurement.
 
 **2. Let Actions open pull requests. Without this the train cannot run at all.**
 
