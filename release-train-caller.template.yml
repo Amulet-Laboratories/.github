@@ -1,0 +1,27 @@
+# TEMPLATE — copy to <repo>/.github/workflows/release-train.yml
+#
+# Thin caller for the org release train. Same shape as each site's deploy.yml,
+# which calls the shared site-ci.yml.
+#
+# Sprints run 1st-14th and 15th-end-of-month, so the train fires on the 1st and
+# the 15th at 09:00 UTC. That is semi-monthly rather than strictly fortnightly:
+# 24 releases a year, and the second half of a 31-day month is a 17-day sprint.
+# The trade buys calendar alignment, which is worth more here than uniform length.
+#
+# The 1st or 15th landing on a weekend does not matter: this opens a PR and never
+# merges, so it simply waits for you.
+#
+# workflow_dispatch is the hotfix path — run it any time to promote immediately.
+name: Release train
+
+on:
+  schedule:
+    - cron: '0 9 1,15 * *'
+  workflow_dispatch:
+
+jobs:
+  release:
+    uses: Amulet-Laboratories/.github/.github/workflows/release-train.yml@main
+    permissions:
+      contents: write
+      pull-requests: write

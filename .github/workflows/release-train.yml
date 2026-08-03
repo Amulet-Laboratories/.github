@@ -1,0 +1,118 @@
+# Reusable release train for every repo that deploys or publishes.
+#
+# The estate went back to a develop/main split on 2026-08-02 to stop paying for a
+# production build on every merge. Work lands on `develop`, which Netlify builds
+# to a staging URL with analytics and Sentry blanked; production only moves when
+# `main` does, on the 1st and the 15th.
+#
+# git-flow was tried here before and abandoned on 2026-07-29 because `develop`
+# went stale in every repo — nothing ever promoted it, and in noosphere it drifted
+# two milestones ahead of main before anyone noticed. That is the failure this
+# workflow exists to prevent: the promotion is scheduled, so drift becomes a PR
+# sitting in your face rather than a silence.
+#
+# It opens a PR. It does not merge. Production stays a human decision.
+name: Release train
+
+on:
+  workflow_call:
+    inputs:
+      base:
+        description: Branch that deploys to production.
+        type: string
+        default: main
+      head:
+        description: Branch work accumulates on.
+        type: string
+        default: develop
+      label:
+        description: Label applied to the release PR, for filtering.
+        type: string
+        default: release
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check whether there is anything to release
+        id: diff
+        env:
+          BASE: ${{ inputs.base }}
+          HEAD: ${{ inputs.head }}
+        run: |
+          set -euo pipefail
+
+          if ! git show-ref --verify --quiet "refs/remotes/origin/$HEAD"; then
+            echo "No $HEAD branch in this repo — nothing to promote."
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Commits on head that are not on base. Not a three-dot diff and not
+          # `git cherry`: both misreport once a branch has been rebased or a
+          # commit has landed by another route, which is how a release train
+          # starts announcing changes that already shipped.
+          COUNT=$(git rev-list --count "origin/$BASE..origin/$HEAD")
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "$COUNT commit(s) on $HEAD not on $BASE."
+
+          {
+            echo 'log<<RELEASE_LOG'
+            git log --no-merges --pretty=format:'- %s (%an)' "origin/$BASE..origin/$HEAD"
+            echo
+            echo RELEASE_LOG
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the release PR
+        if: steps.diff.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ inputs.base }}
+          HEAD: ${{ inputs.head }}
+          LABEL: ${{ inputs.label }}
+          COUNT: ${{ steps.diff.outputs.count }}
+          LOG: ${{ steps.diff.outputs.log }}
+        run: |
+          set -euo pipefail
+          TITLE="Release $(date -u +%Y-%m-%d) — $COUNT commit(s)"
+
+          BODY=$(cat <<EOF
+          Scheduled promotion of \`$HEAD\` → \`$BASE\`.
+
+          **Merging this deploys production.** Nothing else does.
+
+          ## What ships
+
+          $LOG
+
+          ---
+
+          Opened by the release train. If this is empty or wrong, check whether
+          something was pushed straight to \`$BASE\` — that bypasses the train and
+          is the one thing that can desynchronise it.
+          EOF
+          )
+
+          EXISTING=$(gh pr list --base "$BASE" --head "$HEAD" --state open --json number --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            # Reuse the open PR rather than stacking a second one each cycle.
+            gh pr edit "$EXISTING" --title "$TITLE" --body "$BODY"
+            echo "Updated existing release PR #$EXISTING"
+          else
+            gh pr create --base "$BASE" --head "$HEAD" --title "$TITLE" --body "$BODY" --label "$LABEL" \
+              || gh pr create --base "$BASE" --head "$HEAD" --title "$TITLE" --body "$BODY"
+          fi
+
+      - name: Report a quiet cycle
+        if: steps.diff.outputs.count == '0'
+        run: echo "Nothing on ${{ inputs.head }} that is not already on ${{ inputs.base }}. No PR opened."
