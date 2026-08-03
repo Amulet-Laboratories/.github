@@ -92,6 +92,24 @@ async function check(results, site, name, fn) {
   }
 }
 
+/**
+ * A canonical must name a URL that SERVES the page — not merely one on the right
+ * host. Returns an error string, or null when it holds.
+ */
+async function canonicalResolves(html, base, site) {
+  const m = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/i)
+  if (!m) return 'no <link rel="canonical"> found'
+  const canonical = m[1]
+  if (!canonical.startsWith(`${base}`)) return `canonical -> ${canonical} (expected host ${site.host})`
+
+  const r = await robustFetch(canonical, { redirect: 'manual' })
+  if (r.status >= 300 && r.status < 400) {
+    return `canonical ${canonical} -> ${r.status} ${r.headers.get('location') || ''} (must serve, not redirect)`
+  }
+  if (!r.ok) return `canonical ${canonical} -> ${r.status}`
+  return null
+}
+
 async function checkSite(site, results) {
   const base = `https://${site.host}`
   const S = site.name
@@ -109,12 +127,17 @@ async function checkSite(site, results) {
   })
 
   if (home && home.ok && html != null) {
-    await check(results, S, 'canonical host', () => {
-      const m = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/i)
-      if (!m) return 'no <link rel="canonical"> found'
-      if (!m[1].startsWith(`${base}`)) return `canonical -> ${m[1]} (expected host ${site.host})`
-      return null
-    })
+    // Asserts the canonical is SELF-REFERENTIAL, not merely on the right host.
+    //
+    // This used to check only `startsWith(base)`, which is a statement about the
+    // hostname and not about whether the URL works. On 2026-08-02 every one of
+    // QuizSort's 1278 canonicals named a URL that 301'd — the sitemap listed the
+    // bare form, Netlify redirected it to the trailing-slash form, and the page
+    // canonicalised back to the form that redirects. This check ran every 30
+    // minutes throughout and stayed green, because the host was always right.
+    //
+    // A canonical that redirects is a canonical pointing at a different URL.
+    await check(results, S, 'canonical resolves', () => canonicalResolves(html, base, site))
 
     await check(results, S, 'security headers', () => {
       const missing = ['content-security-policy', 'strict-transport-security', 'x-frame-options'].filter(
@@ -123,6 +146,24 @@ async function checkSite(site, results) {
       return missing.length ? `missing: ${missing.join(', ')}` : null
     })
   }
+
+  // The homepage canonical is the one least likely to be wrong — "/" serves
+  // whatever the trailing-slash convention is. QuizSort's homepage canonical was
+  // correct throughout 2026-08-02 while all 1277 of its OTHER canonicals named a
+  // URL that redirected, so checking only the homepage would have reported clean.
+  //
+  // Sample a real sub-page as well: the canary roundup on the content sites, or
+  // an explicit deepPath. Requested in the bare form on purpose, so the whole
+  // chain (host redirect -> page -> canonical) is what gets asserted.
+  const deep = site.deepPath || site.canaryPath
+  if (deep) {
+    await check(results, S, `canonical resolves (${deep})`, async () => {
+      const { res, body } = await robustFetch(`${base}${deep}`, { readBody: true })
+      if (!res.ok) return `GET ${deep} -> ${res.status}`
+      return canonicalResolves(body, base, site)
+    })
+  }
+
 
   await check(results, S, 'robots.txt', async () => {
     const r = await robustFetch(`${base}/robots.txt`)
@@ -152,6 +193,27 @@ async function checkSite(site, results) {
       if (r.status < 300 || r.status >= 400) return `/go/${site.goSlug} -> ${r.status} (expected 30x)`
       const loc = r.headers.get('location') || ''
       if (!/^https?:\/\//.test(loc) || loc.includes(site.host)) return `redirects to "${loc}" (expected external retailer)`
+
+      // …and that it reached a PRODUCT, not a search page.
+      //
+      // The redirect handler falls back to an Amazon search URL whenever a slug
+      // misses the bundled corpus. That fallback is a valid 30x to a reachable
+      // external host, so the assertion above passes for it — which is how 619
+      // of QuizSort's 785 destinations pointed at search results for months
+      // while this check reported healthy.
+      //
+      // Phrased as "not a search page" rather than "matches /dp/", because the
+      // resolver legitimately picks non-Amazon retailers by commission rate and
+      // their product URLs take other shapes.
+      let dest
+      try {
+        dest = new URL(loc)
+      } catch {
+        return `redirects to an unparseable location "${loc}"`
+      }
+      if (/^\/s\/?$/.test(dest.pathname) || /\/search\b/.test(dest.pathname)) {
+        return `fell through to a search page: ${loc}`
+      }
       return null
     })
   }

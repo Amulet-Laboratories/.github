@@ -3,17 +3,54 @@
     "Post-deploy smoke targets for the affiliate network. Each entry is checked",
     "against LIVE production by smoke.mjs. `expectedCards` is the number of",
     "rendered product cards on that canary roundup (data-rig-product-card roots),",
-    "verified against prod — if it drops (e.g. the MDC multi-card render bug",
+    "verified against prod \u2014 if it drops (e.g. the MDC multi-card render bug",
     "regresses, collapsing a roundup to one card), the smoke job goes red.",
-    "Pick the biggest roundup per site so a partial-render regression is unmissable."
+    "Pick the biggest roundup per site so a partial-render regression is unmissable.",
+    "`deepPath` (or canaryPath) is sampled for a SECOND canonical check. The homepage canonical is the least likely to be wrong: on 2026-08-02 QuizSort's homepage canonical was correct while all 1277 others named a URL that redirected, so a homepage-only check reported clean throughout."
   ],
   "sites": [
-    { "name": "Beanwoven",      "host": "beanwoven.com",      "canaryPath": "/articles/best-coffee-maker-home",           "expectedCards": 7 },
-    { "name": "FewerSerums",    "host": "fewerserums.com",    "canaryPath": "/articles/best-drugstore-skincare-products", "expectedCards": 8 },
-    { "name": "Meepleloft",     "host": "meepleloft.com",     "canaryPath": "/articles/how-to-start-board-game-collection","expectedCards": 7 },
-    { "name": "OneGoodLamp",    "host": "onegoodlamp.com",    "canaryPath": "/articles/warm-minimalism",                  "expectedCards": 5 },
-    { "name": "TheScruffGuide", "host": "thescruffguide.com", "canaryPath": "/articles/new-puppy-checklist",              "expectedCards": 6 },
-    { "name": "TheShelfNook",   "host": "theshelfnook.com",   "canaryPath": "/articles/best-e-reader-accessories",        "expectedCards": 7 },
-    { "name": "QuizSort",       "host": "quizsort.com",       "hub": true, "goSlug": "hario-v60-dripper" }
+    {
+      "name": "Beanwoven",
+      "host": "beanwoven.com",
+      "canaryPath": "/articles/best-coffee-maker-home",
+      "expectedCards": 7
+    },
+    {
+      "name": "FewerSerums",
+      "host": "fewerserums.com",
+      "canaryPath": "/articles/best-drugstore-skincare-products",
+      "expectedCards": 8
+    },
+    {
+      "name": "Meepleloft",
+      "host": "meepleloft.com",
+      "canaryPath": "/articles/how-to-start-board-game-collection",
+      "expectedCards": 7
+    },
+    {
+      "name": "OneGoodLamp",
+      "host": "onegoodlamp.com",
+      "canaryPath": "/articles/warm-minimalism",
+      "expectedCards": 5
+    },
+    {
+      "name": "TheScruffGuide",
+      "host": "thescruffguide.com",
+      "canaryPath": "/articles/new-puppy-checklist",
+      "expectedCards": 6
+    },
+    {
+      "name": "TheShelfNook",
+      "host": "theshelfnook.com",
+      "canaryPath": "/articles/best-e-reader-accessories",
+      "expectedCards": 7
+    },
+    {
+      "name": "QuizSort",
+      "host": "quizsort.com",
+      "hub": true,
+      "goSlug": "hario-v60-dripper",
+      "deepPath": "/faq"
+    }
   ]
 }
