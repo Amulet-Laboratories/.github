@@ -65,3 +65,49 @@ jobs:
             exit 1
           fi
           echo "✓ no spin-tells in content/articles"
+
+      # Layer-drift guard. rig-nuxt ships shared pages and components, and a
+      # project file at the same path silently wins over the layer's copy — no
+      # warning, no error. That silence is how each site kept its own copy of
+      # pages the layer already provided, long after the extraction was done:
+      # the copies were found in August 2026, two months stale.
+      #
+      # Overriding a layer file is legitimate and supported. Keeping a copy that
+      # is identical to it is not — that is duplication with no override in it.
+      - name: Layer drift guard
+        run: |
+          node --input-type=module -e '
+          import { readFileSync, existsSync, readdirSync, statSync } from "node:fs"
+          import { join, relative } from "node:path"
+          const layer = "node_modules/@amulet-laboratories/rig-nuxt/layer"
+          if (!existsSync(layer)) {
+            console.log("no rig-nuxt layer installed — nothing to compare")
+            process.exit(0)
+          }
+          const walk = (d) => readdirSync(d).flatMap((f) => {
+            const p = join(d, f)
+            return statSync(p).isDirectory() ? walk(p) : [p]
+          })
+          const norm = (p) => readFileSync(p, "utf8").replace(/\s+/g, " ").trim()
+          const dupes = walk(layer)
+            .filter((f) => !f.endsWith("nuxt.config.ts"))
+            .map((f) => relative(layer, f))
+            .filter((rel) => existsSync(rel) && norm(rel) === norm(join(layer, rel)))
+          if (dupes.length) {
+            console.error("✗ these project files are identical to the rig-nuxt layer copy:")
+            for (const d of dupes) console.error("    " + d)
+            console.error("")
+            console.error("  Delete them — the layer already provides them. Keep a file at a")
+            console.error("  layer path only when it actually differs from what the layer ships.")
+            process.exit(1)
+          }
+          console.log("✓ no redundant copies of layer files")
+          '
+
+      # Restores the gate deleted by accident in 2e2b39a (2026-07-23), which
+      # added the spin-tell lint and dropped `pnpm build` in the same diff. The
+      # header above kept describing a build gate that had not run since. The
+      # MDC content guard runs inside the build via the rig-nuxt module hook, so
+      # it went eleven days without executing either.
+      - name: Build
+        run: pnpm build
