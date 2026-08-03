@@ -152,6 +152,14 @@ if (unknown.length) {
   )
 }
 
+// A machine-readable tally, so a caller can report the shape of the result rather
+// than only its pass/fail. Printed on every run: a status that appears only when
+// something is wrong is a status nobody learns to read.
+console.log(
+  `CLAIMS_TALLY held=${results.filter((r) => r.state === 'PASS').length} ` +
+    `false=${failed.length} unknown=${unknown.length}`,
+)
+
 if (process.env.GITHUB_STEP_SUMMARY) {
   const { appendFileSync } = await import('node:fs')
   appendFileSync(

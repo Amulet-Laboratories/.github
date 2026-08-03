@@ -110,9 +110,10 @@ jobs:
           echo "$OUT"
           {
             echo 'report<<CLAIMS'
-            echo "$OUT"
+            echo "$OUT" | grep -vE '^CLAIMS_TALLY'
             echo CLAIMS
           } >> "$GITHUB_OUTPUT"
+          echo "tally=$(echo "$OUT" | grep -m1 '^CLAIMS_TALLY' | sed 's/^CLAIMS_TALLY //')" >> "$GITHUB_OUTPUT"
           echo "status=$([ $CODE -eq 0 ] && echo held || echo drifted)" >> "$GITHUB_OUTPUT"
           exit 0
 
@@ -126,17 +127,23 @@ jobs:
           COUNT: ${{ steps.diff.outputs.count }}
           LOG: ${{ steps.diff.outputs.log }}
           CLAIM_STATUS: ${{ steps.claims.outputs.status }}
+          CLAIM_TALLY: ${{ steps.claims.outputs.tally }}
           CLAIMS: ${{ steps.claims.outputs.report }}
         run: |
           set -euo pipefail
           TITLE="Release $(date -u +%Y-%m-%d) — $COUNT commit(s)"
 
-          DRIFT=""
+          # Always rendered, in every state. An absent section would mean either
+          # "all claims hold" or "nothing ran", and those must never look alike.
           case "${CLAIM_STATUS:-}" in
             drifted)
-              DRIFT=$(printf '\n## :warning: A process document is now wrong\n\n```\n%s\n```\n\nFix the document or the system before merging.\n' "$CLAIMS") ;;
+              DRIFT=$(printf '\n## :warning: Process claims — a document is now wrong\n\n`%s`\n\n```\n%s\n```\n\nFix the document or the system before merging.\n' "$CLAIM_TALLY" "$CLAIMS") ;;
+            held)
+              DRIFT=$(printf '\n## Process claims — `%s`\n\n<details><summary>What was checked</summary>\n\n```\n%s\n```\n\n</details>\n\n**`unknown` is not `held`.** CI runs with a repo-scoped token and no Netlify\ncredential, so cross-repo, org and Netlify claims cannot be checked here. Run\n`node scripts/verify-process.mjs` locally for the full set.\n' "$CLAIM_TALLY" "$CLAIMS") ;;
             broken)
               DRIFT=$(printf '\n## :grey_question: Process claims were not checked\n\nThe verifier could not be run, so nothing here is confirmed. Not the same as passing.\n') ;;
+            *)
+              DRIFT=$(printf '\n## :grey_question: Process claims were not checked\n\nThe verification step did not report. Not the same as passing.\n') ;;
           esac
 
           BODY=$(cat <<EOF
