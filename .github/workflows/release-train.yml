@@ -1,9 +1,14 @@
 # Reusable release train for every repo that deploys or publishes.
 #
 # The estate went back to a develop/main split on 2026-08-02 to stop paying for a
-# production build on every merge. Work lands on `develop`, which Netlify builds
-# to a staging URL with analytics and Sentry blanked; production only moves when
-# `main` does, on the 1st and the 15th.
+# production build on every merge. Work lands on `develop`; production only moves
+# when `main` does, on the 1st and the 15th.
+#
+# This comment used to say `develop` was built to a staging URL with analytics and
+# Sentry blanked. There is no staging URL and there never was — Netlify's
+# allowed_branches is ["main"] on every site, so `develop` is not built at all.
+# RELEASE-PROCESS.md was corrected on 2026-08-02 (be96ea8); this header was not,
+# and stayed wrong until 2026-08-03. Review is what PR previews are for.
 #
 # git-flow was tried here before and abandoned on 2026-07-29 because `develop`
 # went stale in every repo — nothing ever promoted it, and in noosphere it drifted
@@ -103,6 +108,15 @@ jobs:
             # the checker is missing is how a check gets ignored.
             echo "status=broken" >> "$GITHUB_OUTPUT"
             echo "verifier not found at $SCRIPT"
+            exit 0
+          fi
+          # The verifier's own canary, before its verdict is believed. Two of its
+          # checks parse YAML, and the first draft of one answered "broken" for
+          # every repo whatever the input — a check that cannot vary is not a
+          # check, and it fails green just as easily as it fails red.
+          if ! node "$SCRIPT" --self-test; then
+            echo "status=broken" >> "$GITHUB_OUTPUT"
+            echo "verifier self-test failed — its verdict is not trustworthy"
             exit 0
           fi
           OUT=$(node "$SCRIPT" 2>&1)
