@@ -43,6 +43,31 @@ it builds nothing; the release PR builds one preview; merging that deploys produ
    matter — it opens a PR and never merges, so it waits for you.
 5. You read it and merge. That merge — and only that merge — deploys production.
 
+### The gate, at step 4
+
+CI has already run lint, type-check, unit tests and e2e on every push, so the release
+PR is asking a different question: *did this fortnight's work hold up for a person?*
+
+**If the sprint touched a user-facing flow**, run the standing persona panel against
+the release PR's preview before merging — `/user-test`, three personas, the keyboard
+user, the returning multi-day user and the cold bounce. Roughly 300k tokens. A larger
+change earns the full panel of seven; most trains earn neither.
+
+Two rules, both learned the hard way and both written up in the vault's
+`work/business/quality-loop.md`:
+
+- **Never run it on unchanged code.** The same findings come back in new prose and the
+  document that results feels like progress.
+- **Never run it while a built feature sits unpromoted.** Promote first, then gate.
+  A quality pass on code nobody can reach is the most satisfying way to avoid shipping.
+
+A gate is finished when every finding has become an assertion in the repo's own suite,
+a task record, or a written dismissal — not when the report is written. The assertions
+are the only part that compounds.
+
+**Persona output never becomes a metric.** It finds friction; it says nothing about
+demand, however much it reads like it does.
+
 Sprints run on the same boundaries — 1st–14th and 15th–end of month. The plan they
 draw from is the roadmap's numbered sequence, and each sprint's only artifact is one
 entry in the vault's `work/business/log/`. See `work/business/sprints.md`.
