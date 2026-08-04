@@ -54,7 +54,7 @@ user, the returning multi-day user and the cold bounce. Roughly 300k tokens. A l
 change earns the full panel of seven; most trains earn neither.
 
 Two rules, both learned the hard way and both written up in the vault's
-`work/business/quality-loop.md`:
+`work/business/system-loop.md` — the one record for how work happens here:
 
 - **Never run it on unchanged code.** The same findings come back in new prose and the
   document that results feels like progress.
